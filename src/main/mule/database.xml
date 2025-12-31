@@ -1,0 +1,40 @@
+<?xml version="1.0" encoding="UTF-8"?>
+
+<mule xmlns:ee="http://www.mulesoft.org/schema/mule/ee/core" xmlns:db="http://www.mulesoft.org/schema/mule/db"
+	xmlns:http="http://www.mulesoft.org/schema/mule/http"
+	xmlns="http://www.mulesoft.org/schema/mule/core" xmlns:doc="http://www.mulesoft.org/schema/mule/documentation" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xsi:schemaLocation="http://www.mulesoft.org/schema/mule/core http://www.mulesoft.org/schema/mule/core/current/mule.xsd
+http://www.mulesoft.org/schema/mule/http http://www.mulesoft.org/schema/mule/http/current/mule-http.xsd
+http://www.mulesoft.org/schema/mule/db http://www.mulesoft.org/schema/mule/db/current/mule-db.xsd
+http://www.mulesoft.org/schema/mule/ee/core http://www.mulesoft.org/schema/mule/ee/core/current/mule-ee.xsd">
+	<http:listener-config name="HTTP_Listener_config" doc:name="HTTP Listener config" doc:id="8ebf3424-339e-458a-b207-d00c6982c462" >
+		<http:listener-connection host="0.0.0.0" port="8081" />
+	</http:listener-config>
+	<db:config name="Database_Config" doc:name="Database Config" doc:id="6637c5f4-efdb-48ba-9da2-44942d8ac430" >
+		<db:my-sql-connection host="192.168.0.109" port="3306" user="root" password="root" database="my_db" />
+	</db:config>
+	<db:config name="Database_Config1" doc:name="Database Config" doc:id="239ad946-4e3d-4ca4-9e1b-56ba349ae89b" >
+		<db:my-sql-connection host="192.168.0.109" port="3306" user="root" password="root" database="job_db" />
+	</db:config>
+	<flow name="databaseFlow" doc:id="764ab3d4-54f4-4637-b0d7-495af41af15e" >
+		<http:listener doc:name="Listener" doc:id="3caeb137-bfbd-46e1-9403-40bcd8bac089" config-ref="HTTP_Listener_config" path="/database"/>
+		<db:select doc:name="SelectA" doc:id="3800c6eb-98d1-4042-8b62-ebd5fc8fda0f" config-ref="Database_Config">
+			<db:sql><![CDATA[select * from booking]]></db:sql>
+		</db:select>
+		<set-variable value="#[payload]" doc:name="Set Variable A" doc:id="3bfde1ac-84ff-4c75-bdcb-80868c869785" variableName="selectA" />
+		<db:select doc:name="SelectB" doc:id="bf97792f-c88e-430c-888b-71e460f19f73" config-ref="Database_Config1">
+			<db:sql ><![CDATA[select * from certificate]]></db:sql>
+		</db:select>
+		<set-variable value="#[payload]" doc:name="Set Variable" doc:id="0134fe6c-ea20-4327-8da7-d6c317dd8671" variableName="selectB"/>
+		<ee:transform doc:name="Transform Message" doc:id="fcad2a10-0816-41aa-9a5b-7a34399c868b">
+			<ee:message>
+				<ee:set-payload><![CDATA[%dw 2.0
+output application/json
+---
+{
+     fromDB1: vars.selectA, 
+    fromDB2: vars.selectB
+}]]></ee:set-payload>
+			</ee:message>
+		</ee:transform>
+	</flow>
+</mule>
